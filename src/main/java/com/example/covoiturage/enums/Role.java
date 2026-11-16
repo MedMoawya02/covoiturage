@@ -2,5 +2,6 @@ package com.example.covoiturage.enums;
 
 public enum Role {
     CONDUCTEUR,
-    PASSAGER
+    PASSAGER,
+    ADMIN
 }
