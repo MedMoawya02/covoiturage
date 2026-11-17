@@ -10,5 +10,5 @@ public record RegisterConducteurRequest (
         @NotBlank@Email String email,
         @NotBlank String telephone,
         @NotBlank @Size(min = 6,message = "Le mot de passe doit contenir au moins 6 caractéres")String password,
-        @NotBlank String numeroPassword
+        @NotBlank String numeroPermis
 ){}

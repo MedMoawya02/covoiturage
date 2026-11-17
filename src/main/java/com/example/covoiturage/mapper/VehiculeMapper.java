@@ -9,7 +9,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface VehiculeMapper {
-    @Mapping(target = "conducteur_id",source = "conducteur.id")
+    @Mapping(target = "conducteurId",source = "conducteur.id")
     VehiculeResponse toResponse(Vehicule vehicule);
 
     @Mapping(target="id",ignore = true)

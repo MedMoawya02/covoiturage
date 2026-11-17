@@ -1,4 +1,11 @@
 package com.example.covoiturage.dto.response;
 
-public class VehiculeResponse {
-}
+public record VehiculeResponse(
+        Long id,
+        String marque,
+        String modele,
+        String immatriculation,
+        String couleur,
+        Integer capacite,
+        Long conducteurId
+) {}

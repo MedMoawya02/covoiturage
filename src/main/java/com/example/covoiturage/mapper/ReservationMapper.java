@@ -12,7 +12,7 @@ public interface ReservationMapper {
 
     @Mapping(target = "trajetId", source = "trajet.id")
     @Mapping(target = "villeDepart", source = "trajet.villeDepart")
-    @Mapping(target = "villeArrivee", source = "trajet.villeArrivee")
+    @Mapping(target = "villeArrivee", source = "trajet.villeArrive")
     @Mapping(target = "pointMonteeVille", source = "pointMontee.ville")
     @Mapping(target = "pointDescenteVille", source = "pointDescente.ville")
     ReservationResponse toResponse(Reservation reservation);
