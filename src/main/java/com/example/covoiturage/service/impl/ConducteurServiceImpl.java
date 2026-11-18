@@ -66,7 +66,14 @@ public class ConducteurServiceImpl implements ConducteurService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
+        Conducteur conducteur=conducteurRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Id introuvable : "+id));
 
+        if (!conducteur.getTrajets().isEmpty()){
+            throw new BusinessRuleException("Impossible de supprimer un conducteur ayant des trajets");
+        }
+
+        conducteurRepository.delete(conducteur);
     }
 }

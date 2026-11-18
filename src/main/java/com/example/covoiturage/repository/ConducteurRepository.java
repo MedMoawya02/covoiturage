@@ -17,7 +17,7 @@ public interface ConducteurRepository extends JpaRepository<Conducteur,Long> {
     boolean existsByNumeroPermis(String numeroPermis);
     @Query("""
         SELECT c FROM Conducteur c
-        WHERE LOWER(C.nom) LIKE LOWER(CONCAT('%',:q,'%') )
+        WHERE LOWER(c.nom) LIKE LOWER(CONCAT('%',:q,'%') )
             OR LOWER(c.prenom) LIKE LOWER(CONCAT('%', :q, '%'))
                        OR LOWER(c.email) LIKE LOWER(CONCAT('%', :q, '%'))
 """)
