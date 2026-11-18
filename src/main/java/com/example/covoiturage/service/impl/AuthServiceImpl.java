@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse registerPassager(RegisterPassagerRequest request) {
-        if(passagerRepository.existsByEmail(request.email())){
+        if(userRepository.existsByEmail(request.email())){
             throw new BusinessRuleException("Email already exist");
         }
         Passager passager=passagerMapper.toEntity(request);

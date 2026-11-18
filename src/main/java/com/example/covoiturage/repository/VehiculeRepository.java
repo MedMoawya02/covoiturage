@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface VehiculeRepository extends JpaRepository<Vehicule,Long> {
-    List<VehiculeRepository> findByConducteurId(Long id);
+    List<Vehicule> findByConducteurId(Long id);
     boolean existsByImmatriculation(String immatriculation);
+
 }
