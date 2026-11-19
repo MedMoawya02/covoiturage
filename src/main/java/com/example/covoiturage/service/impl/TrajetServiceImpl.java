@@ -19,6 +19,7 @@ import com.example.covoiturage.repository.*;
 import com.example.covoiturage.service.TrajetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -116,13 +117,22 @@ public class TrajetServiceImpl implements TrajetService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TrajetDetailResponse findById(Long id) {
-        return null;
+        Trajet trajet=trajetRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Vehicule introuvable : "+id));
+        return trajetMapper.toDetailResponse(trajet);
     }
 
     @Override
-    public List<TrajetDetailResponse> findByConducteur(Long conducteurId) {
-        return List.of();
+
+    public List<TrajetResponse> findByConducteur(Long conducteurId) {
+        if(!conducteurRepository.existsById(conducteurId)){
+            throw new ResourceNotFoundException("Conducteur introuvable : "+conducteurId);
+        }
+        return trajetRepository.findByConducteurId(conducteurId)
+                .stream()
+                .map(trajetMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override

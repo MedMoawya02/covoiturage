@@ -2,6 +2,8 @@ package com.example.covoiturage.service;
 
 import com.example.covoiturage.dto.request.TrajetRequest;
 import com.example.covoiturage.dto.response.TrajetDetailResponse;
+import com.example.covoiturage.dto.response.TrajetResponse;
+import com.example.covoiturage.entity.Trajet;
 
 import java.util.List;
 
@@ -13,7 +15,7 @@ public interface TrajetService {
     TrajetDetailResponse findById(Long id);
 
     //Liste des trajets d'un conducteur
-    List<TrajetDetailResponse> findByConducteur(Long conducteurId);
+    List<TrajetResponse> findByConducteur(Long conducteurId);
 
     //Réservation d'un trajet d'un conducteur
     List<TrajetDetailResponse> findReservations(Long conducteurId,Long trajetId);
