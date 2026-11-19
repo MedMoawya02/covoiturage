@@ -2,14 +2,14 @@ package com.example.covoiturage.service.impl;
 
 import com.example.covoiturage.dto.request.PointArretRequest;
 import com.example.covoiturage.dto.request.TrajetRequest;
+import com.example.covoiturage.dto.response.ReservationResponse;
 import com.example.covoiturage.dto.response.TrajetDetailResponse;
 import com.example.covoiturage.dto.response.TrajetResponse;
-import com.example.covoiturage.entity.Conducteur;
-import com.example.covoiturage.entity.PointArret;
-import com.example.covoiturage.entity.Trajet;
-import com.example.covoiturage.entity.Vehicule;
+import com.example.covoiturage.entity.*;
+import com.example.covoiturage.enums.StatutReservation;
 import com.example.covoiturage.enums.StatutTrajet;
 import com.example.covoiturage.exception.BusinessRuleException;
+import com.example.covoiturage.exception.ForbiddenException;
 import com.example.covoiturage.exception.ResourceNotFoundException;
 import com.example.covoiturage.mapper.PointArretMapper;
 import com.example.covoiturage.mapper.ReservationMapper;
@@ -42,8 +42,8 @@ public class TrajetServiceImpl implements TrajetService {
         Conducteur conducteur=conducteurRepository.findById(conducteurId).orElseThrow(()->new ResourceNotFoundException("Conducteur introuvable : "+conducteurId));
         //vehicule doit appartenir à un conducteur
         Vehicule vehicule=vehiculeRepository.findById(request.vehiculeId()).orElseThrow(()->new ResourceNotFoundException("Véhicule introuvable : "+request.vehiculeId()));
-        if (!vehicule.getConducteur().equals(conducteurId)){
-            throw new BusinessRuleException("Le véhicule n'appartient pas à ce conducteur");
+        if (!vehicule.getConducteur().getId().equals(conducteurId)){
+            throw new ForbiddenException("Le véhicule n'appartient pas à ce conducteur");
         }
         //au moin 2 points d'arret
         List<PointArretRequest> points=request.pointsArret();
@@ -66,7 +66,7 @@ public class TrajetServiceImpl implements TrajetService {
             }
         }
         //heures strictement croissantes
-        for(int i=0;i<points.size();i++){
+        for(int i=1;i<points.size();i++){
             if(!points.get(i).heurePassage().isAfter(points.get(i-1).heurePassage())){
 
                 throw new BusinessRuleException(
@@ -82,7 +82,7 @@ public class TrajetServiceImpl implements TrajetService {
 
             if(points.get(0).prixDepuisDepart().compareTo(BigDecimal.ZERO)!=0){
                 throw new BusinessRuleException("Le prix au premier point doit être 0");}
-            for (int i=0;i<points.size();i++){
+            for (int i=1;i<points.size();i++){
                 if(points.get(i).prixDepuisDepart().compareTo(points.get(i - 1).prixDepuisDepart())<=0){
                     throw new BusinessRuleException(
                             "Les prix depuis le départ doivent être strictement croissants");
@@ -98,10 +98,10 @@ public class TrajetServiceImpl implements TrajetService {
         trajet.setConducteur(conducteur);
         trajet.setVehicule(vehicule);
         trajet.setDateDepart(heureDepart);
-        trajet.setPlacesProposes(request.placesProposees());
+        trajet.setPlacesProposees(request.placesProposees());
         trajet.setStatut(StatutTrajet.PUBLIE);
         trajet.setVilleDepart(points.get(0).ville());
-        trajet.setVilleArrive(points.get(points.size()-1).ville());
+        trajet.setVilleArrivee(points.get(points.size()-1).ville());
         //creation des points d'arret
         for (PointArretRequest p:points){
             PointArret pa=new PointArret();
@@ -119,7 +119,7 @@ public class TrajetServiceImpl implements TrajetService {
     @Override
     @Transactional(readOnly = true)
     public TrajetDetailResponse findById(Long id) {
-        Trajet trajet=trajetRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Vehicule introuvable : "+id));
+        Trajet trajet=trajetRepository.findByIdWithDetails(id).orElseThrow(()->new ResourceNotFoundException("Vehicule introuvable : "+id));
         return trajetMapper.toDetailResponse(trajet);
     }
 
@@ -136,17 +136,54 @@ public class TrajetServiceImpl implements TrajetService {
     }
 
     @Override
-    public List<TrajetDetailResponse> findReservations(Long conducteurId, Long trajetId) {
-        return List.of();
+    public List<ReservationResponse> findReservations(Long conducteurId, Long trajetId) {
+        Trajet trajet=trajetRepository.findById(trajetId).orElseThrow(()->new ResourceNotFoundException("Trajet introuvable : "+trajetId));
+        if(!trajet.getConducteur().getId().equals(conducteurId)){
+            throw new BusinessRuleException("Ce trajet n'appartient pas à ce conducteur");
+        }
+
+        return reservationRepository.findByTrajetId(trajetId).stream()
+                .map(reservationMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public TrajetDetailResponse terminer(Long conducteurId, Long trajetId) {
-        return null;
+        Trajet trajet=trajetRepository.findById(trajetId).orElseThrow(()->new ResourceNotFoundException("Trajet introuvable : "+trajetId));
+        if(!trajet.getConducteur().getId().equals(conducteurId)){
+            throw new ForbiddenException("Ce trajet n'appartient pas à ce conducteur : "+conducteurId);
+        }
+        if(trajet.getStatut()==StatutTrajet.TERMINE||trajet.getStatut()==StatutTrajet.ANNULE){
+            throw new BusinessRuleException("Ne peut pas terminer ce trajet.");
+        }
+        if (LocalDateTime.now().isBefore(trajet.getDateDepart())) {
+            throw new BusinessRuleException("Impossible de terminer un trajet avant son départ");
+        }
+        trajet.setStatut(StatutTrajet.TERMINE);
+        Trajet saved=trajetRepository.save(trajet);
+        return trajetMapper.toDetailResponse(saved);
     }
 
     @Override
+    @Transactional
     public void annuler(Long conducteurId, Long trajetId) {
-
+        Trajet trajet=trajetRepository.findById(trajetId).orElseThrow(()->new ResourceNotFoundException("Trajet introuvable : "+trajetId));
+        if (!trajet.getConducteur().getId().equals(conducteurId)){
+            throw new ForbiddenException("Ce trajet n'appartient pas à ce conducteur");
+        }
+        if (trajet.getStatut()==StatutTrajet.TERMINE||trajet.getStatut()==StatutTrajet.ANNULE){
+            throw new BusinessRuleException("Ne peut pas annuler un trajet : "+ trajet.getStatut());
+        }
+        //annuler tous les reservations
+        List<Reservation> reservations=reservationRepository.findByTrajetId(trajetId);
+        for(Reservation r:reservations){
+            if(r.getStatut()==StatutReservation.CONFIRMEE){
+                r.setStatut(StatutReservation.ANNULEE);
+            }
+        }
+        reservationRepository.saveAll(reservations);
+        trajet.setStatut(StatutTrajet.ANNULE);
+        trajetRepository.save(trajet);
     }
 }

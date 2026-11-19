@@ -23,7 +23,7 @@ public class PointArret {
     @NotBlank
     @Column(nullable = false)
     private String ville;
-    @NotBlank@Min(0)
+    @NotNull@Min(0)
     @Column(nullable = false)
     private Integer ordre;
     @NotNull

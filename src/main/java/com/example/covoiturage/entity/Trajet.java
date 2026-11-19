@@ -19,19 +19,19 @@ import java.util.List;
 public class Trajet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
     @NotBlank
     @Column(nullable = false)
     private String villeDepart;
     @NotBlank
     @Column(nullable = false)
-    private String villeArrive;
+    private String villeArrivee;
     @NotNull
     @Column(nullable = false)
     private LocalDateTime dateDepart;
     @NotNull@Min(1)
     @Column(nullable = false)
-    private Integer placesProposes;
+    private Integer placesProposees;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatutTrajet statut;
@@ -44,6 +44,7 @@ public class Trajet {
     private Vehicule vehicule;
 
     @OneToMany(mappedBy = "trajet",cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)
+    @OrderBy("ordre ASC")
     private List<PointArret> pointsArret=new ArrayList<>();
     @OneToMany(mappedBy = "trajet",fetch = FetchType.LAZY)
     private List<Reservation> reservations=new ArrayList<>();

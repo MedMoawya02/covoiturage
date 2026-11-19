@@ -43,7 +43,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex, HttpServletRequest req) {
         log.error("Erreur interne", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur interne", "Une erreur est survenue", req);
+        // ⚠️ TEMPORAIRE — afficher la vraie cause
+        return build(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Erreur interne",
+                ex.getClass().getSimpleName() + " : " + ex.getMessage(),
+                req
+        );
     }
 
     private ProblemDetail build(HttpStatus status, String title, String detail, HttpServletRequest req) {
