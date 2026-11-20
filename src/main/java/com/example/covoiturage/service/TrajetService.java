@@ -5,7 +5,10 @@ import com.example.covoiturage.dto.response.ReservationResponse;
 import com.example.covoiturage.dto.response.TrajetDetailResponse;
 import com.example.covoiturage.dto.response.TrajetResponse;
 import com.example.covoiturage.entity.Trajet;
+import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TrajetService {
@@ -26,5 +29,8 @@ public interface TrajetService {
 
     //annuler un trajet
     void annuler(Long conducteurId,Long trajetId);
+
+    //chercher un trajet
+    Page<TrajetResponse> chercher(String pointDepart, String pointArrivee, LocalDateTime dateMin, BigDecimal prixMax, int page, int size);
 
 }

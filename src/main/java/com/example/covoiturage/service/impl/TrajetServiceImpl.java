@@ -18,6 +18,7 @@ import com.example.covoiturage.mapper.VehiculeMapper;
 import com.example.covoiturage.repository.*;
 import com.example.covoiturage.service.TrajetService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -185,5 +186,45 @@ public class TrajetServiceImpl implements TrajetService {
         reservationRepository.saveAll(reservations);
         trajet.setStatut(StatutTrajet.ANNULE);
         trajetRepository.save(trajet);
+    }
+
+    //chercher un trajet
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TrajetResponse> chercher(String pointDepart, String pointArrivee, LocalDateTime date, BigDecimal prixMax, int page, int size) {
+
+        Pageable pageable= PageRequest.of(page,size, Sort.by("dateDepart").ascending());
+
+        //date minimale :si non fournie ,on prend "maintenant"
+        LocalDateTime dateEffictive=(date!=null)?date:LocalDateTime.now();
+
+        Page<Trajet> trajets=trajetRepository.rechercherTrajets(pointDepart,pointArrivee,dateEffictive,StatutTrajet.PUBLIE,prixMax,pageable);
+
+        //filtrer les trajets qui ont assez des places
+        List<TrajetResponse> trajetFiltres=trajets.getContent().stream()
+                .filter(trajet -> placesRestante(trajet)>0)
+                .map(trajet ->{
+                    TrajetResponse base=trajetMapper.toResponse(trajet);
+                    return new TrajetResponse(
+                            base.id(),
+                            base.villeDepart(),
+                            base.villeArrivee(),
+                            base.dateDepart(),
+                            base.placesProposees(),
+                            placesRestante(trajet),
+                            base.statut(),
+                            base.conducteurNomComplet(),
+                            base.vehiculeInfo()
+                    );
+                        }
+                        ).collect(Collectors.toList());
+
+        return new PageImpl<>(trajetFiltres,pageable,trajetFiltres.size());
+    }
+
+    //fonction pour calculer les places restants pour un trajet
+    private Integer placesRestante(Trajet t){
+        Integer reserves=reservationRepository.sumPlacesReserves(t.getId(),StatutReservation.CONFIRMEE);
+        return t.getPlacesProposees()-reserves;
     }
 }

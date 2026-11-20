@@ -7,10 +7,17 @@ import com.example.covoiturage.dto.response.TrajetResponse;
 import com.example.covoiturage.service.TrajetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -53,6 +60,20 @@ public class TrajetController {
             @PathVariable Long trajetId) {
         trajetService.annuler(conducteurId, trajetId);
         return ResponseEntity.noContent().build();
+    }
+
+    //chercher un trajet entre deux villes
+    @GetMapping("/trajets/search")
+    public ResponseEntity<Page<TrajetResponse>> rechercher(
+            @RequestParam String villeDepart,
+            @RequestParam String villeArrivee,
+            @RequestParam(required = false)
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(required = false)BigDecimal prixMax,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+            ){
+        return ResponseEntity.ok(trajetService.chercher(villeDepart,villeArrivee,date,prixMax,page,size));
     }
 
 }
